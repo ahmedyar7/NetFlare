@@ -5,6 +5,7 @@ import geoip2.errors
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+import uvicorn
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
@@ -75,5 +76,18 @@ async def lifespan(app: FastAPI):
     yield
     scheduler.shutdown()
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(title="NetFlare",lifespan=lifespan)
 
+@app.get("/")
+def home():
+    return {
+        "msg" : "NetFlare Server side is running fine"
+    }
+
+@app.get("/attacks")
+def get_attacks():
+    return attack_cache
+
+
+if __name__ == "__main__":
+    uvicorn.run("main:app",host="127.0.0.1",port=8000,reload=True) 
