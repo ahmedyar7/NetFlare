@@ -8,3 +8,6 @@ wheels/
 
 # Virtual environments
 .venv
+.env
+
+# claude --resume d6b16b62-0b2f-46f3-ae97-cb9c6900a1bc 
