@@ -64,3 +64,16 @@ def refresh_attack():
     print(f"Cache Refreshed: {len(attack_cache)} plottable IP(s)")
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    refresh_attack()
+
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(refresh_attack,"interval",minutes=10)
+    scheduler.start()
+
+    yield
+    scheduler.shutdown()
+
+app = FastAPI(lifespan=lifespan)
+
