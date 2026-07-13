@@ -195,7 +195,17 @@ def home():
 
 @app.get("/attacks")
 def get_attacks():
-    return attack_cache
+   
+    with sqlite3.connect(DB_FILE) as conn:
+        conn.row_factory = sqlite3.Row
+        
+        rows = conn.execute(
+            "SELECT lat, lng, score, country FROM attacks"
+            "ORDER BY last_seen DESC LIMIT 200"
+        ).fetchall()
+    
+    return [dict(r) for r in rows]
+
 
 
 if __name__ == "__main__":
