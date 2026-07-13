@@ -173,7 +173,6 @@ async def lifespan(app: FastAPI):
     broadcast_task.cancel()
     scheduler.shutdown()
 
-
     # --- NO NEED TO MANAULLY LOAD AND REFRESH THE CACHE --- #
     # load_cache_or_fetch()
 
@@ -188,24 +187,41 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="NetFlare", lifespan=lifespan)
 
 
+# --- API ENDPONTS --- #
+
+
 @app.get("/")
 def home():
     return {"msg": "NetFlare Server side is running fine"}
 
 
+@app.get("debug/fake")
+async def fake_event():
+    await event_queue.put(
+        {
+            "ip": "1.2.3.4",
+            "lat": random.uniform(-60, 70),
+            "lng": random.uniform(-180, 180),
+            "score": random.uniform(75, 100),
+            "country": "XX",
+        }
+    )
+
+    return {"queued": True}
+
+
 @app.get("/attacks")
 def get_attacks():
-   
+
     with sqlite3.connect(DB_FILE) as conn:
         conn.row_factory = sqlite3.Row
-        
+
         rows = conn.execute(
             "SELECT lat, lng, score, country FROM attacks"
             "ORDER BY last_seen DESC LIMIT 200"
         ).fetchall()
-    
-    return [dict(r) for r in rows]
 
+    return [dict(r) for r in rows]
 
 
 if __name__ == "__main__":

@@ -1,9 +1,7 @@
 """db.py
 
-This file contain the code regarding:
 1. Initialization of the SQLite DB.
 2. Upserts the attack rows to the database.
-
 """
 
 import sqlite3
@@ -13,48 +11,42 @@ DB_FILE = Path("./data/netflare.db")
 
 
 def init_db():
-
     with sqlite3.connect(DB_FILE) as conn:
         conn.execute("""
-
-            CREATE TABLE IF NOT EXIST attacks(
-                ip TEXT PRIMARY_KEY,
+            CREATE TABLE IF NOT EXISTS attacks (
+                ip TEXT PRIMARY KEY,
                 lat REAL, lng REAL,
                 score INTEGER,
                 country TEXT,
                 first_seen TEXT DEFAULT (datetime('now')),
-                last_seen TEXT DEFAULT (datetime('now')),   
+                last_seen TEXT DEFAULT (datetime('now'))
             )
-
         """)
 
 
 def upsert_attacks(rows: list[dict]) -> list[dict]:
     """
     Inserts/updates rows.
-    Return only the NEWS ones (first time seen)
+    Returns only the NEW ones (first time seen).
     """
-
     new_rows = []
 
     with sqlite3.connect(DB_FILE) as conn:
         for r in rows:
             existing = conn.execute(
-                "SELECT 1 FROM attacks WHERE ip = ?", (r["ip"])
+                "SELECT 1 FROM attacks WHERE ip = ?", (r["ip"],)
             ).fetchone()
 
             if existing:
                 conn.execute(
-                    "UPDATE attacks SET score=?, last_seen=datatime('now') WHERE ip=?",
+                    "UPDATE attacks SET score=?, last_seen=datetime('now') WHERE ip=?",
                     (r["score"], r["ip"]),
                 )
-
             else:
                 conn.execute(
-                    "INSERT INTO attacks (ip, lat, lng, score, country)",
+                    "INSERT INTO attacks (ip, lat, lng, score, country) VALUES (?,?,?,?,?)",
                     (r["ip"], r["lat"], r["lng"], r["score"], r["country"]),
                 )
-
                 new_rows.append(r)
 
     return new_rows
