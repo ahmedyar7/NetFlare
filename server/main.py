@@ -9,7 +9,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 import uvicorn
 
+import asyncio
 from apscheduler.schedulers.background import BackgroundScheduler
+
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -17,6 +20,16 @@ load_dotenv()
 import json
 import time
 from pathlib import Path
+
+from db import DB_FILE, init_db, upsert_attacks
+from connection_manager import ConnectionManager
+
+# Queueing the new events waiting to be drip fed to the new client.
+event_queue: asyncio.Queue = asyncio.Queue()
+
+
+manager = ConnectionManager()
+
 
 # --- Saving the Cache --- #
 
