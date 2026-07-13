@@ -1,3 +1,5 @@
+"""main.py"""
+
 import os
 import httpx
 import geoip2.database
@@ -37,10 +39,12 @@ def refresh_attack():
     runs every 10 minutes
     """
 
+    global refresh_attack
+
     url = "https://api.abuseipdb.com/api/v2/blacklist"
     headers = {"Accept": "application/json", "Key": ABUSEIPDB_KEY}
 
-    params = {"confidenceMinimum": 75, "limit": 10}
+    params = {"confidenceMinimum": 75, "limit": 50}
 
     try:
         response = httpx.get(url, headers=headers, params=params, timeout=30)
@@ -57,7 +61,7 @@ def refresh_attack():
             try:
                 geo = reader.city(item["ipAddress"])
             except geoip2.errors.AddressNotFoundError:
-                return
+                continue
 
             if geo.location.latitude is None:
                 continue  # This means that you can't plot it on a globe
@@ -103,10 +107,10 @@ def load_cache_or_fetch():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    refresh_attack()
+    load_cache_or_fetch()
 
     scheduler = BackgroundScheduler()
-    scheduler.add_job(refresh_attack, "interval", minutes=10)
+    scheduler.add_job(refresh_attack, "interval", hours=6)
     scheduler.start()
 
     yield
