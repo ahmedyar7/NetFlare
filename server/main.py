@@ -216,9 +216,12 @@ def get_attacks():
     with sqlite3.connect(DB_FILE) as conn:
         conn.row_factory = sqlite3.Row
 
-        rows = conn.execute(
-            "SELECT lat, lng, score, country FROM attacks"
-            "ORDER BY last_seen DESC LIMIT 200"
+        rows = conn.execute("""
+            SELECT lat, lng, score, country
+            FROM attacks
+            ORDER BY last_seen DESC
+            LIMIT 200
+        """
         ).fetchall()
 
     return [dict(r) for r in rows]
