@@ -12,6 +12,7 @@ import uvicorn
 
 import asyncio
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 
 from dotenv import load_dotenv
@@ -22,6 +23,7 @@ import json
 import time
 from pathlib import Path
 
+import sqlite3
 from db import DB_FILE, init_db, upsert_attacks
 from connection_manager import ConnectionManager
 
@@ -144,16 +146,43 @@ def load_cache_or_fetch():
     refresh_attack()
 
 
+# --- LifeSpan --- #
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    load_cache_or_fetch()
 
-    scheduler = BackgroundScheduler()
+    init_db()
+
+    # Only hit the API if the DB is empty (first ever run)
+    with sqlite3.connect(DB_FILE) as conn:
+        count = conn.execute("SELECT COUNT(*) FROM attacks").fetchone()[0]
+
+    if count == 0:
+        await refresh_attack()
+    else:
+        print(f"DB count {count} IPs, skipping startup fetch")
+
+    scheduler = AsyncIOScheduler()
     scheduler.add_job(refresh_attack, "interval", hours=6)
     scheduler.start()
 
+    broadcast_task = asyncio.create_task(broadcaster())
     yield
+
+    broadcast_task.cancel()
     scheduler.shutdown()
+
+
+    # --- NO NEED TO MANAULLY LOAD AND REFRESH THE CACHE --- #
+    # load_cache_or_fetch()
+
+    # scheduler = BackgroundScheduler()
+    # scheduler.add_job(refresh_attack, "interval", hours=6)
+    # scheduler.start()
+
+    # yield
+    # scheduler.shutdown()
 
 
 app = FastAPI(title="NetFlare", lifespan=lifespan)
