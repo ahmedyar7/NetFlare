@@ -46,7 +46,7 @@ DB_PATH = "./data/GeoLite2-City.mmdb"
 attack_cache: list[dict] = []
 
 
-def refresh_attack():
+async def refresh_attack():
     """
     Fetch the blacklisted IPs from the AbuseIPDB & geolocation each IP.
     runs every 10 minutes
@@ -60,9 +60,16 @@ def refresh_attack():
     params = {"confidenceMinimum": 75, "limit": 50}
 
     try:
-        response = httpx.get(url, headers=headers, params=params, timeout=30)
-        response.raise_for_status()
-        ip_list = response.json()["data"]
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.get(
+                url=url,
+                headers=headers,
+                params=params,
+            )
+
+            response.raise_for_status()
+            ip_list = response.json()["data"]
+
     except Exception as e:
         print(f"Fetch failed keeping the old cache {e}")
         return
@@ -88,11 +95,24 @@ def refresh_attack():
                 }
             )
 
-    attack_cache = results
-    CACHE_FILE.write_text(
-        json.dumps(results)
-    )  # This would persist after the success...
-    print(f"Cache Refreshed: {len(attack_cache)} plottable IP(s)")
+    new_rows = upsert_attacks(results)
+    print(f"Refresh Done: {len(results)} IPs processed, {len(new_rows)} news")
+
+    for row in new_rows:
+        await event_queue.put(row)
+
+    # --- STORE THE ABUSEIPDB IPS INTO THE JSON FORMAT ---- #
+
+    # - REPLACED WITH THE SQLITE DB
+
+    # attack_cache = results
+    # CACHE_FILE.write_text(
+    #     json.dumps(results)
+    # )  # This would persist after the success...
+    # print(f"Cache Refreshed: {len(attack_cache)} plottable IP(s)")
+
+
+
 
 
 def load_cache_or_fetch():
