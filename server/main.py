@@ -1,6 +1,7 @@
 """main.py"""
 
 import os
+import random
 import httpx
 import geoip2.database
 import geoip2.errors
@@ -112,7 +113,12 @@ async def refresh_attack():
     # print(f"Cache Refreshed: {len(attack_cache)} plottable IP(s)")
 
 
-
+# --- Broadcaster: Drip feed queued event to all clients --- #
+async def broadcaster():
+    while True:
+        event = await event_queue.get()
+        await manager.broadcast(event)  # waiting till something is queued.
+        await asyncio.sleep(random.uniform(2, 8))  # the live feel day.
 
 
 def load_cache_or_fetch():
