@@ -6,7 +6,7 @@ export function useLiveEvents() {
   const [latestEvent, setLatestEvent] = useState(null);
 
   useEffect(() => {
-    const ws = WebSocket(WS_URL);
+    const ws = new WebSocket(WS_URL);
 
     ws.onmessage = (e) => {
       try {
