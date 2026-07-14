@@ -5,6 +5,7 @@
 """
 
 import sqlite3
+import json
 from pathlib import Path
 
 DB_FILE = Path("./data/netflare.db")
@@ -42,6 +43,7 @@ def upsert_attacks(rows: list[dict]) -> list[dict]:
                     "UPDATE attacks SET score=?, last_seen=datetime('now') WHERE ip=?",
                     (r["score"], r["ip"]),
                 )
+
             else:
                 conn.execute(
                     "INSERT INTO attacks (ip, lat, lng, score, country) VALUES (?,?,?,?,?)",
@@ -50,3 +52,21 @@ def upsert_attacks(rows: list[dict]) -> list[dict]:
                 new_rows.append(r)
 
     return new_rows
+
+
+def save_trends(key: str, payload: dict):
+    with sqlite3.connect(DB_FILE) as conn:
+        conn.execute(
+            """
+            INSERT INTO trends (key, payload, updated_at) VALUES (? ?, datetime('now))
+            ON CONFLICT(key) DO UPDATE SET payload=excluded.payload, updated_at=dateime('now')
+            """,
+            (key, json.dump(payload)),
+        )
+
+
+def load_trends() -> dict:
+    with sqlite3.connect(DB_FILE) as conn:
+        rows = conn.execute("SELECT key, payload, updated_at FROM trends").fetchall()
+
+    return {k: {"data": json.loads(p), "updated_at": u} for k, p, u in rows}
