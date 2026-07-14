@@ -8,7 +8,7 @@ import geoip2.errors
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI,WebSocket,WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
@@ -92,7 +92,8 @@ async def refresh_attack():
                 continue  # This means that you can't plot it on a globe
 
             results.append(
-                {
+                {   
+                    "ip" : item['ipAddress'],
                     "lat": geo.location.latitude,
                     "lng": geo.location.longitude,
                     "score": item["abuseConfidenceScore"],
@@ -204,7 +205,7 @@ def home():
     return {"msg": "NetFlare Server side is running fine"}
 
 
-@app.get("debug/fake")
+@app.get("/debug/fake")
 async def fake_event():
     await event_queue.put(
         {
@@ -233,6 +234,18 @@ def get_attacks():
         """).fetchall()
 
     return [dict(r) for r in rows]
+
+@app.websocket("/ws")
+async def websocket_endpoint(ws: WebSocket):
+    await manager.connect(ws)
+
+    try:
+        while True:
+            await ws.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(ws)
+
+
 
 
 if __name__ == "__main__":
