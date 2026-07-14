@@ -9,7 +9,7 @@ export default function GlobeView({points}){
     useEffect(()=>{
         
         // This would run after the globe component is mounted.
-        const control = globeRef.current.controls();
+        const controls = globeRef.current.controls();
         controls.autoRotate = true,
         controls.autoRotateSpeed = 0.5;
 
@@ -18,7 +18,7 @@ export default function GlobeView({points}){
     return (
         <Globe
             ref={globeRef}
-            globeImageUrl={"//unpkg.com/three-globe/example/img/earth-night.jpg"}
+            globeImageUrl="https://unpkg.com/three-globe/example/img/earth-night.jpg"
             backgroundColor="#000010"
             pointsData={points}
             pointLat='lat'
