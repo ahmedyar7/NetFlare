@@ -5,7 +5,7 @@ const API = "http://localhost:8000";
 const jitter = () => (Math.random() - 0.5) * 0.8;
 
 export function useAttack() {
-  const [points, setPoints] = useState();
+  const [points, setPoints] = useState([]);
 
   useEffect(() => {
     fetch(`${API}/attacks`)
