@@ -1,6 +1,9 @@
 import GlobeView from "./components/GlobeView";
+import { useAttack } from "./hooks/useAttacks";
 
 export default function App(){
   
-  return <GlobeView points={[]}/>;
+  const points = useAttack();
+
+  return <GlobeView points={points}/>;
 }
