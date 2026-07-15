@@ -167,6 +167,7 @@ async def lifespan(app: FastAPI):
         await refresh_trends()
 
     # Calling the along side the job
+    scheduler = AsyncIOScheduler()
     scheduler.add_job(refresh_trends, "interval", hours=1)
 
     # Only hit the API if the DB is empty (first ever run)
@@ -178,7 +179,6 @@ async def lifespan(app: FastAPI):
     else:
         print(f"DB count {count} IPs, skipping startup fetch")
 
-    scheduler = AsyncIOScheduler()
     scheduler.add_job(refresh_attack, "interval", hours=6)
     scheduler.start()
 
@@ -219,7 +219,7 @@ def home():
 
 @app.get("/debug/fake")
 async def fake_event():
-    
+
     await event_queue.put(
         {
             "ip": "1.2.3.4",
