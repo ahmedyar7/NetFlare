@@ -54,6 +54,18 @@ def upsert_attacks(rows: list[dict]) -> list[dict]:
     return new_rows
 
 
+def init_trends_table():
+
+    with sqlite3.connect(DB_FILE) as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS trends(
+                    key TEXT PRIMARY KEY,
+                    payload TEXT,
+                    updated_at TEXT DEFAULT (datetime('now'))
+                )
+            """)
+
+
 def save_trends(key: str, payload: dict):
     with sqlite3.connect(DB_FILE) as conn:
         conn.execute(
