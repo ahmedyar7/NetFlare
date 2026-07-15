@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-const API = "https://localhost:8000";
+const API = "http://localhost:8000";
 
 export function useTrends() {
   const [trends, setTrends] = useState(null);
@@ -8,7 +8,7 @@ export function useTrends() {
   useEffect(() => {
     fetch(`${API}/trends`)
       .then((res) => res.json())
-      .then(setTrends)
+      .then((data) => { console.log("trends:", data); setTrends(data); })
       .catch((err) => console.error("Failed to load trends: ", err));
   }, []);
 }

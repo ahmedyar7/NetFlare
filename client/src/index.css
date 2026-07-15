@@ -3,3 +3,45 @@ body {
   overflow: hidden;
   background: #000010;
 }
+
+.app { position: relative; width: 100vw; height: 100vh; }
+
+.overlay {
+  position: absolute;
+  top: 0; right: 0;
+  width: 340px;
+  height: 100vh;
+  padding: 16px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  pointer-events: none;           /* let globe drag work around panels */
+}
+
+.panel, .ticker {
+  pointer-events: auto;           /* but panels themselves stay interactive */
+  background: rgba(10, 16, 40, 0.85);
+  border: 1px solid #1a2340;
+  border-radius: 8px;
+  padding: 14px;
+  color: #dde6ff;
+  font-family: system-ui, sans-serif;
+}
+
+.panel h2 { margin: 0 0 10px; font-size: 15px; }
+.panel h3, .ticker h3 { margin: 12px 0 6px; font-size: 12px; color: #8899bb; text-transform: uppercase; }
+
+.ticker-row {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  font-family: monospace;
+  padding: 3px 0;
+  border-bottom: 1px solid #131c38;
+}
+.ticker-row .time { color: #667; }
+.ticker-row .country { color: #ffaa00; min-width: 24px; }
+.ticker-row .score { margin-left: auto; color: #ff5533; }
+.muted { color: #556; }
