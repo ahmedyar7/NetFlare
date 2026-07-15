@@ -70,10 +70,10 @@ def save_trends(key: str, payload: dict):
     with sqlite3.connect(DB_FILE) as conn:
         conn.execute(
             """
-            INSERT INTO trends (key, payload, updated_at) VALUES (? ?, datetime('now))
-            ON CONFLICT(key) DO UPDATE SET payload=excluded.payload, updated_at=dateime('now')
+            INSERT INTO trends (key, payload, updated_at) VALUES (?, ?, datetime('now'))
+            ON CONFLICT(key) DO UPDATE SET payload=excluded.payload, updated_at=datetime('now')
             """,
-            (key, json.dump(payload)),
+            (key, json.dumps(payload)),
         )
 
 
