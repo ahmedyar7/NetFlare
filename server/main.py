@@ -8,7 +8,7 @@ import geoip2.errors
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI,WebSocket,WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
@@ -26,8 +26,11 @@ import time
 from pathlib import Path
 
 import sqlite3
-from db import DB_FILE, init_db, upsert_attacks
+
+from db import DB_FILE, init_db, upsert_attacks, load_trends, init_trends_table
 from connection_manager import ConnectionManager
+
+from radar import refresh_trends
 
 # Queueing the new events waiting to be drip fed to the new client.
 event_queue: asyncio.Queue = asyncio.Queue()
@@ -92,8 +95,8 @@ async def refresh_attack():
                 continue  # This means that you can't plot it on a globe
 
             results.append(
-                {   
-                    "ip" : item['ipAddress'],
+                {
+                    "ip": item["ipAddress"],
                     "lat": geo.location.latitude,
                     "lng": geo.location.longitude,
                     "score": item["abuseConfidenceScore"],
@@ -157,6 +160,15 @@ async def lifespan(app: FastAPI):
 
     init_db()
 
+    init_trends_table()
+
+    # fetch trends at startup if we've never fetched (or data is stale)
+    if not load_trends():
+        await refresh_trends()
+
+    # Calling the along side the job
+    scheduler.add_job(refresh_trends, "interval", hours=1)
+
     # Only hit the API if the DB is empty (first ever run)
     with sqlite3.connect(DB_FILE) as conn:
         count = conn.execute("SELECT COUNT(*) FROM attacks").fetchone()[0]
@@ -207,6 +219,7 @@ def home():
 
 @app.get("/debug/fake")
 async def fake_event():
+    
     await event_queue.put(
         {
             "ip": "1.2.3.4",
@@ -235,6 +248,12 @@ def get_attacks():
 
     return [dict(r) for r in rows]
 
+
+@app.get("/trends")
+def get_trends():
+    return load_trends()
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(ws: WebSocket):
     await manager.connect(ws)
@@ -242,10 +261,9 @@ async def websocket_endpoint(ws: WebSocket):
     try:
         while True:
             await ws.receive_text()
+
     except WebSocketDisconnect:
         manager.disconnect(ws)
-
-
 
 
 if __name__ == "__main__":
