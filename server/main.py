@@ -152,6 +152,18 @@ def load_cache_or_fetch():
     refresh_attack()
 
 
+async def replay_random_attack():
+    with sqlite3.connect(DB_FILE) as conn:
+        conn.row_factory = sqlite3.Row
+        row = conn.execute("""
+                SELECT ip, lat, lng, score, country FROM attacks
+                ORDER BY RANDOM() LIMIT 1
+            """).fetchone()
+        
+        if row:
+            await event_queue.put(dict(row))
+
+
 # --- LifeSpan --- #
 
 
@@ -167,8 +179,6 @@ async def lifespan(app: FastAPI):
         await refresh_trends()
 
     # Calling the along side the job
-    scheduler = AsyncIOScheduler()
-    scheduler.add_job(refresh_trends, "interval", hours=1)
 
     # Only hit the API if the DB is empty (first ever run)
     with sqlite3.connect(DB_FILE) as conn:
@@ -179,7 +189,10 @@ async def lifespan(app: FastAPI):
     else:
         print(f"DB count {count} IPs, skipping startup fetch")
 
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(refresh_trends, "interval", hours=1)
     scheduler.add_job(refresh_attack, "interval", hours=6)
+    scheduler.add_job(replay_random_attack, "interval", seconds=3)
     scheduler.start()
 
     broadcast_task = asyncio.create_task(broadcaster())
