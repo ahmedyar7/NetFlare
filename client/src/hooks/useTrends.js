@@ -8,7 +8,12 @@ export function useTrends() {
   useEffect(() => {
     fetch(`${API}/trends`)
       .then((res) => res.json())
-      .then((data) => { console.log("trends:", data); setTrends(data); })
+      .then((data) => {
+        console.log("trends:", data);
+        setTrends(data);
+      })
       .catch((err) => console.error("Failed to load trends: ", err));
   }, []);
+
+  return trends;
 }
