@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: netflare-server
+    runtime: python
+    rootDir: server
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ABUSEIPDB_KEY
+        sync: false          # set the value in the Render dashboard
+      - key: ALLOWED_ORIGINS
+        sync: false          # e.g. https://your-app.vercel.app
