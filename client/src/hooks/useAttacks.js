@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 // FastAPI Endpoint
-const API = "http://localhost:8000";
+const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 const jitter = () => (Math.random() - 0.5) * 0.8;
 
 export function useAttack() {
