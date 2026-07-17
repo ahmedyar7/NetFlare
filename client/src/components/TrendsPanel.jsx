@@ -60,6 +60,7 @@ export default function TrendsPanel() {
 
   const ts = trends.l7_timeseries?.data?.serie_0;
   const origins = trends.l7_top_origin?.data?.top_0;
+  const targets = trends.l7_top_target?.data?.top_0;
 
   return (
     <div className="panel">
@@ -99,13 +100,29 @@ export default function TrendsPanel() {
           <Bar
             options={{ ...chartOptions, indexAxis: "y" }}
             data={{
-              labels: origins.map(
-                (o) => o.originCountryAlpha2 || o.originCountryAlpha2,
-              ),
+              labels: origins.map((o) => o.originCountryAlpha2),
               datasets: [
                 {
                   data: origins.map((o) => Number(o.value)),
                   backgroundColor: "#ffaa00",
+                },
+              ],
+            }}
+          />
+        </>
+      )}
+
+      {targets && (
+        <>
+          <h3>Top target Attacks</h3>
+          <Bar
+            options={{ ...chatOptions, indexAxis: "y" }}
+            data={{
+              labels: targets.map((o) => o.targetCountryAlpha2),
+              datasets: [
+                {
+                  data: targets.map((o) => Number(o.value)),
+                  backgroundColor: "#ff5533",
                 },
               ],
             }}
