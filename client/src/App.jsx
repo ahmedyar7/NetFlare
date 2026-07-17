@@ -39,7 +39,7 @@ export default function App() {
     };
 
     setRings((prev) => [...prev, ring]);
-    setTimeout(() => setRings((prev) => prev.filter((r) => r != ring), 3000));
+    setTimeout(() => setRings((prev) => prev.filter((r) => r !== ring)), 3000);
 
     // arc form a random origin to the events after 4 second.
 
@@ -57,7 +57,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <GlobeView points={[...initialPoints, ...livePoints]}/>
+      <GlobeView points={[...initialPoints, ...livePoints]} rings={rings} arcs={arcs}/>
       <div className="overlay">
         <TrendsPanel/>
         <Ticker liveEvent={liveEvents} />
