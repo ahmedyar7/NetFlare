@@ -116,7 +116,7 @@ export default function TrendsPanel() {
         <>
           <h3>Top target Attacks</h3>
           <Bar
-            options={{ ...chatOptions, indexAxis: "y" }}
+            options={{ ...chartOptions, indexAxis: "y" }}
             data={{
               labels: targets.map((o) => o.targetCountryAlpha2),
               datasets: [
