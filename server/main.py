@@ -214,9 +214,15 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="NetFlare", lifespan=lifespan)
 
+# Comma-separated list of allowed origins, e.g.
+# "http://localhost:5173,https://your-app.vercel.app"
+ALLOWED_ORIGINS = os.environ.get(
+    "ALLOWED_ORIGINS", "http://localhost:5173"
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[o.strip() for o in ALLOWED_ORIGINS],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -280,4 +286,7 @@ async def websocket_endpoint(ws: WebSocket):
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    port = int(os.environ.get("PORT", 8000))
+    host = os.environ.get("HOST", "127.0.0.1")
+    reload = os.environ.get("RELOAD", "true").lower() == "true"
+    uvicorn.run("main:app", host=host, port=port, reload=reload)
