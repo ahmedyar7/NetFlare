@@ -248,6 +248,20 @@ body {
   border-bottom: none;
 }
 
+.ticker-row[role="button"] {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.ticker-row[role="button"]:hover {
+  background: rgba(255, 170, 0, 0.08);
+}
+
+.ticker-row.is-selected {
+  background: rgba(255, 170, 0, 0.14);
+  box-shadow: inset 2px 0 0 var(--data);
+}
+
 .ticker-empty {
   font-size: 11px;
   padding: 4px 0;
