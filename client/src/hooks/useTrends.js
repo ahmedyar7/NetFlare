@@ -9,7 +9,6 @@ export function useTrends() {
     fetch(`${API}/trends`)
       .then((res) => res.json())
       .then((data) => {
-        console.log("trends:", data);
         setTrends(data);
       })
       .catch((err) => console.error("Failed to load trends: ", err));
