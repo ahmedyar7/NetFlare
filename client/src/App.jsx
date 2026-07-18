@@ -25,6 +25,16 @@ export default function App() {
   const [arcs, setArcs] = useState([]);
   const [sessionEvents, setSessionEvents] = useState(0);
 
+  // Selected attack: drives the globe fly-to and the ticker row highlight.
+  const [focus, setFocus] = useState(null);
+  const [selectedIp, setSelectedIp] = useState(null);
+
+  const selectAttack = (d) => {
+    if (!d) return;
+    setFocus({ lat: d.lat, lng: d.lng });
+    setSelectedIp(d.ip ?? null);
+  };
+
   useEffect(() => {
     if (!liveEvents) {
       return;
@@ -84,11 +94,21 @@ export default function App() {
         topOrigin={topOrigin}
       />
       <div className="globe-stage">
-        <GlobeView points={points} rings={rings} arcs={arcs} />
+        <GlobeView
+          points={points}
+          rings={rings}
+          arcs={arcs}
+          focus={focus}
+          onPointClick={selectAttack}
+        />
       </div>
       <div className="overlay">
         <TrendsPanel />
-        <Ticker liveEvent={liveEvents} />
+        <Ticker
+          liveEvent={liveEvents}
+          onSelect={selectAttack}
+          selectedIp={selectedIp}
+        />
       </div>
     </div>
   );
