@@ -6,7 +6,7 @@ const scoreClass = (score) => {
   return "score-low";
 };
 
-export default function Ticker({ liveEvent }) {
+export default function Ticker({ liveEvent, onSelect, selectedIp }) {
   const [events, setEvents] = useState([]);
   const idRef = useRef(0);
 
@@ -49,10 +49,20 @@ export default function Ticker({ liveEvent }) {
             "ticker-row",
             i === 0 ? "is-new" : "",
             e.score >= 95 ? "score-high-row" : "",
+            e.ip === selectedIp ? "is-selected" : "",
           ]
             .filter(Boolean)
             .join(" ")}
           key={e.id}
+          role="button"
+          tabIndex={0}
+          onClick={() => onSelect?.(e)}
+          onKeyDown={(ev) => {
+            if (ev.key === "Enter" || ev.key === " ") {
+              ev.preventDefault();
+              onSelect?.(e);
+            }
+          }}
         >
           <span className="time">{e.time}</span>
           <span className="country">{e.country}</span>
