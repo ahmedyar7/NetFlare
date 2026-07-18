@@ -123,10 +123,17 @@ async def refresh_attack():
 
 # --- Broadcaster: Drip feed queued event to all clients --- #
 async def broadcaster():
-    while True:
-        event = await event_queue.get()
-        await manager.broadcast(event)  # waiting till something is queued.
-        await asyncio.sleep(random.uniform(2, 8))  # the live feel day.
+    try:
+        while True:
+            event = await event_queue.get()
+            await manager.broadcast(event)
+            await asyncio.sleep(random.uniform(2, 8))
+
+    except asyncio.CancelledError:
+        print(f"[Broadcaster] Shutdown signal received. Cleaning up gracefully...")
+
+    finally:
+        print(f"[BROADCASTER] offline...")
 
 
 def load_cache_or_fetch():
@@ -159,7 +166,7 @@ async def replay_random_attack():
                 SELECT ip, lat, lng, score, country FROM attacks
                 ORDER BY RANDOM() LIMIT 1
             """).fetchone()
-        
+
         if row:
             await event_queue.put(dict(row))
 
@@ -216,9 +223,7 @@ app = FastAPI(title="NetFlare", lifespan=lifespan)
 
 # Comma-separated list of allowed origins, e.g.
 # "http://localhost:5173,https://your-app.vercel.app"
-ALLOWED_ORIGINS = os.environ.get(
-    "ALLOWED_ORIGINS", "http://localhost:5173"
-).split(",")
+ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
 
 app.add_middleware(
     CORSMiddleware,

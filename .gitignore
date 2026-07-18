@@ -15,3 +15,4 @@ plan.md
 server/data/netflare.db
 server/data/netflare.db
 data.json
+server/understanding.py

@@ -23,31 +23,47 @@ Chart.register(
   Filler,
 );
 
+const GRID = "#1e2a44";
+const TEXT_DIM = "#6b7a99";
+const MONO = "'IBM Plex Mono', ui-monospace, monospace";
+
 const chartOptions = {
   responsive: true,
   plugins: {
     legend: {
       display: false,
     },
+    tooltip: {
+      backgroundColor: "rgba(10, 14, 23, 0.95)",
+      borderColor: GRID,
+      borderWidth: 1,
+      titleFont: { family: MONO, size: 10 },
+      bodyFont: { family: MONO, size: 11 },
+      displayColors: false,
+    },
   },
   scales: {
     x: {
       ticks: {
-        color: "#8899bb",
+        color: TEXT_DIM,
         maxTickLimit: 6,
+        font: { family: MONO, size: 9 },
       },
       grid: {
-        color: "#1a2340",
+        color: GRID,
       },
+      border: { color: GRID },
     },
 
     y: {
       ticks: {
-        color: "#8899bb",
+        color: TEXT_DIM,
+        font: { family: MONO, size: 9 },
       },
       grid: {
-        color: "#1a2340",
+        color: GRID,
       },
+      border: { color: GRID },
     },
   },
 };
@@ -55,7 +71,12 @@ const chartOptions = {
 export default function TrendsPanel() {
   const trends = useTrends();
   if (!trends) {
-    return <div className="panel">Loading Panel...</div>;
+    return (
+      <div className="panel">
+        <h2 className="panel-title">Global Attack Trends</h2>
+        <p className="eyebrow">Acquiring feed…</p>
+      </div>
+    );
   }
 
   const ts = trends.l7_timeseries?.data?.serie_0;
@@ -64,11 +85,11 @@ export default function TrendsPanel() {
 
   return (
     <div className="panel">
-      <h2>Global Attack Trends</h2>
+      <h2 className="panel-title">Global Attack Trends</h2>
 
       {ts && (
-        <>
-          <h3>L7 attack activity (24hr, relative)</h3>
+        <section>
+          <h3 className="eyebrow">THREAT ACTIVITY // L7</h3>
           <Line
             options={chartOptions}
             data={{
@@ -91,12 +112,12 @@ export default function TrendsPanel() {
               ],
             }}
           />
-        </>
+        </section>
       )}
 
       {origins && (
-        <>
-          <h3>Top attacks Origin</h3>
+        <section>
+          <h3 className="eyebrow">ORIGIN NODES</h3>
           <Bar
             options={{ ...chartOptions, indexAxis: "y" }}
             data={{
@@ -109,12 +130,12 @@ export default function TrendsPanel() {
               ],
             }}
           />
-        </>
+        </section>
       )}
 
       {targets && (
-        <>
-          <h3>Top target Attacks</h3>
+        <section>
+          <h3 className="eyebrow">TARGET NODES</h3>
           <Bar
             options={{ ...chartOptions, indexAxis: "y" }}
             data={{
@@ -122,12 +143,12 @@ export default function TrendsPanel() {
               datasets: [
                 {
                   data: targets.map((o) => Number(o.value)),
-                  backgroundColor: "#ff5533",
+                  backgroundColor: "#ff4444",
                 },
               ],
             }}
           />
-        </>
+        </section>
       )}
     </div>
   );
