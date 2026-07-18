@@ -56,23 +56,35 @@ attack_cache: list[dict] = []
 
 async def refresh_attack():
     """
-    Fetch the blacklisted IPs from the AbuseIPDB & geolocation each IP.
-    runs every 10 minutes
+    This function is responsible for two things
+    1. Getting the IPs from the AbuseIPDB Client
+       - Getting the
+       + ip
+       + lat
+       + lng
+       + score
+       + country_code
+
+       - These information is then upserted into the upsert_attack
+       Sqlite local database
+
+    2. Then the geospatial features like
+    - lat
+    - lng
+    are then used for the mapping them to the react.globe.js
     """
 
-    global refresh_attack
+    URL = "https://api.abuseipdb.com/api/v2/blacklist"
+    HEADERS = {"Accept": "application/json", "Key": ABUSEIPDB_KEY}
 
-    url = "https://api.abuseipdb.com/api/v2/blacklist"
-    headers = {"Accept": "application/json", "Key": ABUSEIPDB_KEY}
-
-    params = {"confidenceMinimum": 75, "limit": 50}
+    PARAMS = {"confidenceMinimum": 75, "limit": 50}
 
     try:
         async with httpx.AsyncClient(timeout=30) as client:
             response = await client.get(
-                url=url,
-                headers=headers,
-                params=params,
+                url=URL,
+                headers=HEADERS,
+                params=PARAMS,
             )
 
             response.raise_for_status()
