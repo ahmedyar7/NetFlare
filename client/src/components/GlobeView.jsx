@@ -47,16 +47,13 @@ export default function GlobeView({ points, rings = [], arcs = [] }) {
         globeImageUrl="https://unpkg.com/three-globe/example/img/earth-night.jpg"
         backgroundColor="#0a0e17"
         
-        // --- Atmosphere --- //
-
-        showAtmosphere={true}
+        showAtmosphere={true} // --- Atmosphere --- //
         atmosphereColor="#3a6ea5"
         atmosphereAltitude={0.15}
-
-
-        // --- Points data --- //
-
-        pointsData={points}
+        
+        
+        
+        pointsData={points} // --- Points data --- //
         pointLat="lat"
         pointLng="lng"
         pointColor={(d) => scoreColor(d.score)}
@@ -64,19 +61,15 @@ export default function GlobeView({ points, rings = [], arcs = [] }) {
         pointRadius={0.4}
         pointLabel={(d) => `${d.country} - score ${d.score}`}
         
-        
-        // --- Ring Data --- //
 
-        ringsData={rings}
+        ringsData={rings} // --- Ring Data --- //
         ringColor={() => (t) => `rgba(255,60,60,${1 - t})`}
         ringMaxRadius={10}
         ringPropagationSpeed={2}
         ringRepeatPeriod={600}
+        
 
-
-        // --- Arc Data --- //
-
-        arcsData={arcs}
+        arcsData={arcs} // --- Arc Data --- //
         arcColor={(d) => scoreColor(d.score)}
         arcDashAnimateTime={1500}
         arcDashLength={0.5}

@@ -58,7 +58,7 @@ export default function App() {
       startLng: (Math.random() - 0.5) * 360,
       endLat: point.lat,
       endLng: point.lng,
-      score: point.score
+      score: point.score,
     };
 
     setArcs((prev) => [...prev, arc]);
@@ -72,9 +72,9 @@ export default function App() {
     setTimeout(() => playImpact(point.score), ARC_TRAVEL_MS);
   }, [liveEvents]);
 
-
   const points = [...initialPoints, ...livePoints];
-  const topOrigin = trends?.l7_top_origin?.data?.top_0?.[0]?.originCountryAlpha2;
+  const topOrigin =
+    trends?.l7_top_origin?.data?.top_0?.[0]?.originCountryAlpha2;
 
   return (
     <div className="app">
