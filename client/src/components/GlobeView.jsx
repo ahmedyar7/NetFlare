@@ -77,7 +77,7 @@ export default function GlobeView({ points, rings = [], arcs = [] }) {
         // --- Arc Data --- //
 
         arcsData={arcs}
-        arcColor={() => "#ff5533"}
+        arcColor={(d) => scoreColor(d.score)}
         arcDashAnimateTime={1500}
         arcDashLength={0.5}
         arcDashGap={1}
