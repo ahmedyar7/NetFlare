@@ -8,9 +8,16 @@ const scoreColor = (score) => {
   return "#ffaa00";
 };
 
-export default function GlobeView({ points, rings = [], arcs = [] }) {
+export default function GlobeView({
+  points,
+  rings = [],
+  arcs = [],
+  focus = null,
+  onPointClick,
+}) {
   const globeRef = useRef();
   const wrapRef = useRef(null);
+  const resumeRef = useRef(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
@@ -23,6 +30,31 @@ export default function GlobeView({ points, rings = [], arcs = [] }) {
     controls.autoRotate = !reduced;
     controls.autoRotateSpeed = 0.5;
   }, []);
+
+  // Fly the camera to a selected attack, then hand rotation back after a beat.
+  useEffect(() => {
+    if (!focus || !globeRef.current) return;
+
+    const controls = globeRef.current.controls();
+    const reduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    globeRef.current.pointOfView(
+      { lat: focus.lat, lng: focus.lng, altitude: 1.5 },
+      1000,
+    );
+
+    controls.autoRotate = false;
+    clearTimeout(resumeRef.current);
+    if (!reduced) {
+      resumeRef.current = setTimeout(() => {
+        controls.autoRotate = true;
+      }, 5000);
+    }
+
+    return () => clearTimeout(resumeRef.current);
+  }, [focus]);
 
   // Keep the canvas matched to its container so CSS owns the layout.
   useLayoutEffect(() => {
@@ -56,6 +88,7 @@ export default function GlobeView({ points, rings = [], arcs = [] }) {
         pointAltitude={0.05}
         pointRadius={0.4}
         pointLabel={(d) => `${d.country} - score ${d.score}`}
+        onPointClick={(d) => onPointClick?.(d)}
         ringsData={rings} // --- Ring Data --- //
         ringColor={() => (t) => `rgba(255,60,60,${1 - t})`}
         ringMaxRadius={10}
