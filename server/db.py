@@ -67,6 +67,16 @@ def init_trends_table():
 
 
 def save_trends(key: str, payload: dict):
+    """
+    This function takes the clan JSON from the radar.py -> refresh_trends
+    and the stores them into SQLite Local Database into sync from.
+
+    UPSERTS into the Trends Tables
+    - key
+    - payload (json data)
+    - datenow (current date)
+    """
+
     with sqlite3.connect(DB_FILE) as conn:
         conn.execute(
             """
@@ -78,6 +88,11 @@ def save_trends(key: str, payload: dict):
 
 
 def load_trends() -> dict:
+    """
+    This function fetches the trends from the sqlite database
+    the trends are from refresh_trends in radar.py
+    """
+    
     with sqlite3.connect(DB_FILE) as conn:
         rows = conn.execute("SELECT key, payload, updated_at FROM trends").fetchall()
 
