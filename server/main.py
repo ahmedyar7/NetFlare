@@ -13,7 +13,6 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 import asyncio
-from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 
@@ -122,16 +121,6 @@ async def refresh_attack():
     for row in new_rows:
         await event_queue.put(row)
 
-    # --- STORE THE ABUSEIPDB IPS INTO THE JSON FORMAT ---- #
-
-    # - REPLACED WITH THE SQLITE DB
-
-    # attack_cache = results
-    # CACHE_FILE.write_text(
-    #     json.dumps(results)
-    # )  # This would persist after the success...
-    # print(f"Cache Refreshed: {len(attack_cache)} plottable IP(s)")
-
 
 # --- Broadcaster: Drip feed queued event to all clients --- #
 async def broadcaster():
@@ -146,29 +135,6 @@ async def broadcaster():
 
     finally:
         print(f"[BROADCASTER] offline...")
-
-
-def load_cache_or_fetch():
-    """
-    At Startup:
-    1. Use the disk cache if it's fresh.
-    2. Only hit the API if it's stale/missing
-    """
-
-    global attack_cache
-
-    if CACHE_FILE.exists():
-        age = time.time() - CACHE_FILE.stat().st_mtime
-
-        if age < CACHE_MAX_AGE:
-            attack_cache = json.loads(CACHE_FILE.read_text())
-
-            print(
-                f"Loaded {len(attack_cache)} IPs from disk cache ({age/60:.0f}) min old"
-            )
-            return
-
-    refresh_attack()
 
 
 async def replay_random_attack():
@@ -243,16 +209,6 @@ async def lifespan(app: FastAPI):
 
     broadcast_task.cancel()
     scheduler.shutdown()
-
-    # --- NO NEED TO MANAULLY LOAD AND REFRESH THE CACHE --- #
-    # load_cache_or_fetch()
-
-    # scheduler = BackgroundScheduler()
-    # scheduler.add_job(refresh_attack, "interval", hours=6)
-    # scheduler.start()
-
-    # yield
-    # scheduler.shutdown()
 
 
 app = FastAPI(title="NetFlare", lifespan=lifespan)
