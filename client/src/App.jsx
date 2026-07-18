@@ -58,10 +58,13 @@ export default function App() {
       startLng: (Math.random() - 0.5) * 360,
       endLat: point.lat,
       endLng: point.lng,
+      score: point.score
     };
 
     setArcs((prev) => [...prev, arc]);
-    setTimeout(() => setArcs((prev) => prev.filter((a) => a !== arc)), 4000);
+    // 4500 = 3 x arcDashAnimateTime, so the arc is culled at a clean
+    // dash seam instead of vanishing mid-flight.
+    setTimeout(() => setArcs((prev) => prev.filter((a) => a !== arc)), 4500);
 
     // Audio follows the arc: blip on dispatch, impact when it lands.
     // No-ops unless the user has switched sound on in the status bar.
