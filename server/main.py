@@ -20,8 +20,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-import json
-import time
 from pathlib import Path
 
 import sqlite3
