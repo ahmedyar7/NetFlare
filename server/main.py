@@ -172,12 +172,36 @@ def load_cache_or_fetch():
 
 
 async def replay_random_attack():
+
     with sqlite3.connect(DB_FILE) as conn:
         conn.row_factory = sqlite3.Row
-        row = conn.execute("""
-                SELECT ip, lat, lng, score, country FROM attacks
-                ORDER BY RANDOM() LIMIT 1
-            """).fetchone()
+        cursor = conn.cursor()
+
+        # getting the max and min row_ids
+        cursor.execute("SELECT MIN(rowid), MAX(rowid) from attacks")
+        min_id, max_id = cursor.fetchone()
+
+        # if table empty then exit
+        if min_id is None or max_id is None:
+            return
+
+        # picking a random number
+        target_id = random.randint(min_id, max_id)
+
+        # using >= to return intermidate rows rather than exact rows
+        row = cursor.execute(
+            """
+            SELECT ip, lat, lng, score, country FROM attacks
+            WHERE rowid >= ?
+            LIMIT 1
+        """,
+            (target_id,),
+        ).fetchone()
+
+        if not row:
+            row = cursor.execute(
+                "SELECT ip, lat, lng, score, country FROM attacks LIMIT 1"
+            ).fetchone()
 
         if row:
             await event_queue.put(dict(row))
