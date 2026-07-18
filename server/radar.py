@@ -17,6 +17,10 @@ ENDPOINTS = {
 
 
 async def refresh_trends():
+    """
+    This function asynchronolsly fetches trends from the Cloudflare.com
+    and the store them into local SQLite Database
+    """
 
     headers = {"Authorization": f"Bearer {CLOUDFLARE_TOKEN}"}
 
