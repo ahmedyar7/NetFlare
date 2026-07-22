@@ -6,7 +6,7 @@ import httpx
 import geoip2.database
 import geoip2.errors
 
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, closing
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -30,7 +30,24 @@ from connection_manager import ConnectionManager
 from radar import refresh_trends
 
 # Queueing the new events waiting to be drip fed to the new client.
-event_queue: asyncio.Queue = asyncio.Queue()
+# Bounded: the broadcaster drains slowly by design, so an unbounded queue would
+# grow without limit. A refresh burst (50 rows) fits comfortably under the cap.
+event_queue: asyncio.Queue = asyncio.Queue(maxsize=100)
+
+
+def queue_event(event: dict) -> bool:
+    """
+    Non-blocking enqueue. Returns False if the queue is saturated.
+
+    These events are ambient visuals, so shedding one beats blocking a
+    scheduler job or letting the backlog grow unbounded.
+    """
+    try:
+        event_queue.put_nowait(event)
+        return True
+
+    except asyncio.QueueFull:
+        return False
 
 
 manager = ConnectionManager()
@@ -116,8 +133,10 @@ async def refresh_attack():
     new_rows = upsert_attacks(results)
     print(f"Refresh Done: {len(results)} IPs processed, {len(new_rows)} news")
 
-    for row in new_rows:
-        await event_queue.put(row)
+    dropped = sum(1 for row in new_rows if not queue_event(row))
+
+    if dropped:
+        print(f"Refresh: queue saturated, dropped {dropped} of {len(new_rows)} new rows")
 
 
 # --- Broadcaster: Drip feed queued event to all clients --- #
@@ -137,7 +156,7 @@ async def broadcaster():
 
 async def replay_random_attack():
 
-    with sqlite3.connect(DB_FILE) as conn:
+    with closing(sqlite3.connect(DB_FILE)) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
@@ -168,7 +187,7 @@ async def replay_random_attack():
             ).fetchone()
 
         if row:
-            await event_queue.put(dict(row))
+            queue_event(dict(row))
 
 
 # --- LifeSpan --- #
@@ -188,7 +207,7 @@ async def lifespan(app: FastAPI):
     # Calling the along side the job
 
     # Only hit the API if the DB is empty (first ever run)
-    with sqlite3.connect(DB_FILE) as conn:
+    with closing(sqlite3.connect(DB_FILE)) as conn:
         count = conn.execute("SELECT COUNT(*) FROM attacks").fetchone()[0]
 
     if count == 0:
@@ -199,7 +218,9 @@ async def lifespan(app: FastAPI):
     scheduler = AsyncIOScheduler()
     scheduler.add_job(refresh_trends, "interval", hours=1)
     scheduler.add_job(refresh_attack, "interval", hours=6)
-    scheduler.add_job(replay_random_attack, "interval", seconds=3)
+    # 6s stays just below the broadcaster's ~5s mean drain rate, so replays
+    # top the queue up without ever outrunning it.
+    scheduler.add_job(replay_random_attack, "interval", seconds=6)
     scheduler.start()
 
     broadcast_task = asyncio.create_task(broadcaster())
@@ -213,11 +234,19 @@ app = FastAPI(title="NetFlare", lifespan=lifespan)
 
 # Comma-separated list of allowed origins, e.g.
 # "http://localhost:5173,https://your-app.vercel.app"
-ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.environ.get("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+    if o.strip()
+]
+
+# Debug helpers inject events into every connected client, so they stay off
+# unless explicitly switched on.
+ENABLE_DEBUG_ROUTES = os.environ.get("ENABLE_DEBUG_ROUTES", "false").lower() == "true"
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in ALLOWED_ORIGINS],
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -231,26 +260,28 @@ def home():
     return {"msg": "NetFlare Server side is running fine"}
 
 
-@app.get("/debug/fake")
-async def fake_event():
+if ENABLE_DEBUG_ROUTES:
 
-    await event_queue.put(
-        {
-            "ip": "1.2.3.4",
-            "lat": random.uniform(-60, 70),
-            "lng": random.uniform(-180, 180),
-            "score": random.uniform(75, 100),
-            "country": "XX",
-        }
-    )
+    @app.get("/debug/fake")
+    async def fake_event():
 
-    return {"queued": True}
+        queued = queue_event(
+            {
+                "ip": "1.2.3.4",
+                "lat": random.uniform(-60, 70),
+                "lng": random.uniform(-180, 180),
+                "score": random.uniform(75, 100),
+                "country": "XX",
+            }
+        )
+
+        return {"queued": queued}
 
 
 @app.get("/attacks")
 def get_attacks():
 
-    with sqlite3.connect(DB_FILE) as conn:
+    with closing(sqlite3.connect(DB_FILE)) as conn:
         conn.row_factory = sqlite3.Row
 
         rows = conn.execute("""
@@ -270,6 +301,15 @@ def get_trends():
 
 @app.websocket("/ws")
 async def websocket_endpoint(ws: WebSocket):
+
+    # CORSMiddleware only covers HTTP, so the same origin allowlist has to be
+    # enforced here by hand. Non-browser clients send no Origin header.
+    origin = ws.headers.get("origin")
+
+    if origin is not None and "*" not in ALLOWED_ORIGINS and origin not in ALLOWED_ORIGINS:
+        await ws.close(code=1008)
+        return
+
     await manager.connect(ws)
 
     try:
