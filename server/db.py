@@ -6,13 +6,18 @@
 
 import sqlite3
 import json
+from contextlib import closing
 from pathlib import Path
 
 DB_FILE = Path("./data/netflare.db")
 
+# `with sqlite3.connect(...)` commits the transaction but leaves the connection
+# open, so every call leaked a handle. closing() closes it; the inner `conn`
+# keeps the commit-on-success behaviour for writes.
+
 
 def init_db():
-    with sqlite3.connect(DB_FILE) as conn:
+    with closing(sqlite3.connect(DB_FILE)) as conn, conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS attacks (
                 ip TEXT PRIMARY KEY,
@@ -32,7 +37,7 @@ def upsert_attacks(rows: list[dict]) -> list[dict]:
     """
     new_rows = []
 
-    with sqlite3.connect(DB_FILE) as conn:
+    with closing(sqlite3.connect(DB_FILE)) as conn, conn:
         for r in rows:
             existing = conn.execute(
                 "SELECT 1 FROM attacks WHERE ip = ?", (r["ip"],)
@@ -56,7 +61,7 @@ def upsert_attacks(rows: list[dict]) -> list[dict]:
 
 def init_trends_table():
 
-    with sqlite3.connect(DB_FILE) as conn:
+    with closing(sqlite3.connect(DB_FILE)) as conn, conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS trends(
                     key TEXT PRIMARY KEY,
@@ -77,7 +82,7 @@ def save_trends(key: str, payload: dict):
     - datenow (current date)
     """
 
-    with sqlite3.connect(DB_FILE) as conn:
+    with closing(sqlite3.connect(DB_FILE)) as conn, conn:
         conn.execute(
             """
             INSERT INTO trends (key, payload, updated_at) VALUES (?, ?, datetime('now'))
@@ -93,7 +98,7 @@ def load_trends() -> dict:
     the trends are from refresh_trends in radar.py
     """
     
-    with sqlite3.connect(DB_FILE) as conn:
+    with closing(sqlite3.connect(DB_FILE)) as conn:
         rows = conn.execute("SELECT key, payload, updated_at FROM trends").fetchall()
 
     return {k: {"data": json.loads(p), "updated_at": u} for k, p, u in rows}
