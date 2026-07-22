@@ -38,6 +38,10 @@ live without hammering the upstream APIs.
 
 ## Demo
 
+<a href="https://drive.google.com/file/d/1ffb1HXle2Ybm6LmeqAjMZ7Yvhr9MD053/view?usp=sharing">
+  <img src="./assets/thumbnail.png" height="250" >
+</a>
+
 ## Architecture
 
 ```mermaid
