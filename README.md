@@ -36,13 +36,53 @@ live without hammering the upstream APIs.
 - **Threat audio** — ambient severity cues driven by the current threat level
 - **Persistent cache** — SQLite store survives restarts; upstream APIs polled on a schedule
 
+## Demo
+
 ## Architecture
 
-```
-AbuseIPDB ──┐
-            ├─> FastAPI (scheduler + SQLite) ──REST /attacks /trends──> React client
-Cloudflare ─┘                                └──WebSocket /ws────────>   (globe + panels)
-   Radar
+```mermaid
+---
+config:
+  layout: dagre
+---
+flowchart TB
+ subgraph EXT["🌐 External Data Sources"]
+        A1["AbuseIPDB API<br>(blacklist endpoint)<br>malicious IPs + confidence scores"]
+        A2["Cloudflare Radar API<br>attack trends + traffic spikes"]
+        A3["GeoLite2 DB (MaxMind)<br>local IP → lat/lon lookup"]
+  end
+ subgraph BE["⚙️ Backend — FastAPI"]
+        B1["Scheduler (APScheduler)<br>polls APIs every 5 min"]
+        B2["Ingestion Service<br>httpx async fetchers"]
+        B3["ML Classifier<br>Random Forest / XGBoost<br>DDoS likelihood score"]
+        B4["Geolocation Service<br>geoip2 lookup"]
+        B5[("Cache / Store<br>Redis or SQLite")]
+        B6["REST endpoint<br>GET /attacks"]
+        B7["WebSocket endpoint<br>/ws — live event push"]
+  end
+ subgraph FE["🖥️ Frontend"]
+        C1["Globe.gl (Three.js)<br>3D globe with arcs &amp; pulses"]
+        C2["Trends Panel<br>charts from Radar data"]
+        C3["WebSocket client<br>receives live events"]
+  end
+    A1 -- IP list + abuse scores --> B2
+    A2 -- attack trend data --> B2
+    B1 -- triggers --> B2
+    B2 -- raw IP records --> B3
+    B3 -- "high-confidence DDoS IPs" --> B4
+    A3 -. offline lookup .-> B4
+    B4 -- (lat, lon, score, country) --> B5
+    B5 --> B6
+    B5 -- new events --> B7
+    B6 -- initial load (JSON) --> C1
+    B7 -- live updates --> C3
+    C3 -- spawn arcs + ripples --> C1
+    B6 -- trend stats --> C2
+
+    style EXT fill:#1a1a2e,stroke:#e94560,color:#fff
+    style BE fill:#16213e,stroke:#0f9b8e,color:#fff
+    style FE fill:#0f3460,stroke:#e9a319,color:#fff
+
 ```
 
 | Job                   | Interval  | Purpose                                    |
@@ -161,4 +201,4 @@ NetFlare/
 
 ## License
 
-MIT
+[MIT](./LICENSE)
