@@ -1,11 +1,10 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Globe from "react-globe.gl";
 
-// Threat ramp: amber -> orange -> red as the score climbs.
 const scoreColor = (score) => {
-  if (score >= 95) return "#ff4444";
-  if (score >= 88) return "#ff7733";
-  return "#ffaa00";
+  if (score >= 95) return "#ff4444"; // red
+  if (score >= 88) return "#ff7733"; // orange
+  return "#ffaa00"; // amber
 };
 
 export default function GlobeView({
@@ -14,6 +13,7 @@ export default function GlobeView({
   arcs = [],
   focus = null,
   onPointClick,
+  onReady,
 }) {
   const globeRef = useRef();
   const wrapRef = useRef(null);
@@ -78,10 +78,19 @@ export default function GlobeView({
         height={size.height || undefined}
         globeImageUrl="https://unpkg.com/three-globe/example/img/earth-night.jpg"
         backgroundColor="#0a0e17"
-        showAtmosphere={true} // --- Atmosphere --- //
+        onGlobeReady={() => onReady?.()}
+
+
+        // --- Atmosphere --- //
+        
+        showAtmosphere={true} 
         atmosphereColor="#3a6ea5"
         atmosphereAltitude={0.15}
-        pointsData={points} // --- Points data --- //
+
+
+        // --- Points data --- //
+
+        pointsData={points} 
         pointLat="lat"
         pointLng="lng"
         pointColor={(d) => scoreColor(d.score)}
@@ -89,12 +98,20 @@ export default function GlobeView({
         pointRadius={0.4}
         pointLabel={(d) => `${d.country} - score ${d.score}`}
         onPointClick={(d) => onPointClick?.(d)}
-        ringsData={rings} // --- Ring Data --- //
+
+
+        // --- Ring Data --- //
+        
+        ringsData={rings} 
         ringColor={() => (t) => `rgba(255,60,60,${1 - t})`}
         ringMaxRadius={10}
         ringPropagationSpeed={2}
         ringRepeatPeriod={600}
-        arcsData={arcs} // --- Arc Data --- //
+
+
+        // --- Arc Data --- //
+        
+        arcsData={arcs} 
         arcColor={(d) => scoreColor(d.score)}
         arcDashAnimateTime={1500}
         arcDashLength={0.5}

@@ -50,10 +50,38 @@ function StatCell({ label, value, accent = false }) {
   );
 }
 
+// Five-segment gauge; filled segments and colour come from the rolling
+// average of recent abuse scores.
+function ThreatGauge({ threat }) {
+  const { label, segments, tone } = threat;
+
+  return (
+    <div className={`threat threat-${tone}`}>
+      <span className="stat-label">Threat Level</span>
+      <div className="threat-row">
+        <div
+          className="threat-bars"
+          role="meter"
+          aria-valuemin={0}
+          aria-valuemax={5}
+          aria-valuenow={segments}
+          aria-label={`Threat level ${label}`}
+        >
+          {[1, 2, 3, 4, 5].map((n) => (
+            <i key={n} className={n <= segments ? "bar is-lit" : "bar"} />
+          ))}
+        </div>
+        <span className="threat-label">{label}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function StatusBar({
   trackedIps = 0,
   sessionEvents = 0,
   topOrigin,
+  threat = { label: "STANDBY", segments: 0, tone: "idle" },
   onAudioChange,
 }) {
   const tracked = useCountUp(trackedIps);
@@ -82,6 +110,7 @@ export default function StatusBar({
       </div>
 
       <div className="statusbar-right">
+        <ThreatGauge threat={threat} />
         <StatCell label="Tracked IPs" value={tracked.toLocaleString()} />
         <StatCell label="Events / Session" value={events.toLocaleString()} />
         <StatCell label="Top Origin" value={topOrigin || "—"} accent />

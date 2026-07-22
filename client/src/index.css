@@ -169,6 +169,184 @@ body {
   border-color: color-mix(in srgb, var(--live) 45%, transparent);
 }
 
+/* ---------- threat gauge ---------- */
+
+.threat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  line-height: 1;
+  --tone: var(--text-dim);
+}
+
+.threat-low {
+  --tone: var(--live);
+}
+.threat-guarded {
+  --tone: var(--data);
+}
+.threat-elevated {
+  --tone: #ff7733;
+}
+.threat-high {
+  --tone: #ff5533;
+}
+.threat-critical {
+  --tone: var(--threat);
+}
+
+.threat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.threat-bars {
+  display: flex;
+  gap: 2px;
+}
+
+.threat-bars .bar {
+  width: 4px;
+  height: 11px;
+  border-radius: 1px;
+  background: var(--grid);
+  transition: background 0.3s ease;
+}
+
+.threat-bars .bar.is-lit {
+  background: var(--tone);
+}
+
+.threat-label {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--tone);
+  min-width: 8ch;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .threat-critical .bar.is-lit {
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+}
+
+/* ---------- legend ---------- */
+
+.legend {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 12px;
+  background: var(--surface);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--grid);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--text-dim);
+  pointer-events: none;
+}
+
+.legend-title {
+  color: var(--text);
+  letter-spacing: 0.18em;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-range {
+  font-style: normal;
+  opacity: 0.6;
+}
+
+/* ---------- boot overlay ---------- */
+
+.boot {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  transition: opacity 0.6s ease;
+}
+
+.boot.is-done {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.boot-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.boot-mark {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 26px;
+  letter-spacing: 0.3em;
+  color: var(--text);
+  text-indent: 0.3em;
+}
+
+.boot-line {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--data);
+}
+
+.boot-track {
+  width: 180px;
+  height: 2px;
+  background: var(--grid);
+  overflow: hidden;
+}
+
+.boot-fill {
+  width: 40%;
+  height: 100%;
+  background: var(--data);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .boot-fill {
+    animation: boot-sweep 1.1s ease-in-out infinite;
+  }
+}
+
+@keyframes boot-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
 /* ---------- panels ---------- */
 
 .panel,
