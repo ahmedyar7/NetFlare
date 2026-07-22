@@ -24,7 +24,9 @@ class ConnectionManager:
     async def broadcast(self, message: dict):
         dead = []
 
-        for ws in self.clients:
+        # Snapshot: send_json awaits, so a client connecting or disconnecting
+        # mid-loop would otherwise mutate the list we're iterating.
+        for ws in list(self.clients):
             try:
                 await ws.send_json(message)
             except Exception:
