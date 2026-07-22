@@ -7,22 +7,25 @@ export function useLiveEvents() {
 
   useEffect(() => {
     let ws;
+    let retry;
     let stopped = false;
 
     function connect() {
+      if (stopped) return;
+
       ws = new WebSocket(WS_URL);
 
       ws.onmessage = (e) => {
         try {
           setLatestEvent(JSON.parse(e.data));
-        } catch (error) {
+        } catch {
           console.warn("Non-JSON WebSocket message:", e.data);
         }
       };
 
       ws.onclose = () => {
         if (!stopped) {
-          setTimeout(connect, 2000);
+          retry = setTimeout(connect, 2000);
         }
       };
     }
@@ -31,7 +34,20 @@ export function useLiveEvents() {
 
     return () => {
       stopped = true;
-      ws.close();
+      clearTimeout(retry);
+
+      if (!ws) return;
+
+      // Don't let our own teardown trigger a reconnect.
+      ws.onclose = null;
+
+      // Closing mid-handshake makes the browser log an error, so if the socket
+      // hasn't finished connecting yet, wait until it has.
+      if (ws.readyState === WebSocket.CONNECTING) {
+        ws.onopen = () => ws.close();
+      } else {
+        ws.close();
+      }
     };
   }, []);
 

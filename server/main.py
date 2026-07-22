@@ -136,7 +136,9 @@ async def refresh_attack():
     dropped = sum(1 for row in new_rows if not queue_event(row))
 
     if dropped:
-        print(f"Refresh: queue saturated, dropped {dropped} of {len(new_rows)} new rows")
+        print(
+            f"Refresh: queue saturated, dropped {dropped} of {len(new_rows)} new rows"
+        )
 
 
 # --- Broadcaster: Drip feed queued event to all clients --- #
@@ -306,7 +308,11 @@ async def websocket_endpoint(ws: WebSocket):
     # enforced here by hand. Non-browser clients send no Origin header.
     origin = ws.headers.get("origin")
 
-    if origin is not None and "*" not in ALLOWED_ORIGINS and origin not in ALLOWED_ORIGINS:
+    if (
+        origin is not None
+        and "*" not in ALLOWED_ORIGINS
+        and origin not in ALLOWED_ORIGINS
+    ):
         await ws.close(code=1008)
         return
 

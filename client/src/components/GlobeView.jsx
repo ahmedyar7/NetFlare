@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Globe from "react-globe.gl";
 
 const scoreColor = (score) => {
@@ -20,16 +20,23 @@ export default function GlobeView({
   const resumeRef = useRef(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
 
-  useEffect(() => {
-    // This would run after the globe component is mounted.
-    const reduced = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+  // Mounting the component isn't enough: the underlying globe instance is
+  // built asynchronously, so controls() is only safe once it reports ready.
+  const handleGlobeReady = () => {
+    const globe = globeRef.current;
 
-    const controls = globeRef.current.controls();
-    controls.autoRotate = !reduced;
-    controls.autoRotateSpeed = 0.5;
-  }, []);
+    if (globe) {
+      const reduced = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+
+      const controls = globe.controls();
+      controls.autoRotate = !reduced;
+      controls.autoRotateSpeed = 0.5;
+    }
+
+    onReady?.();
+  };
 
   // Fly the camera to a selected attack, then hand rotation back after a beat.
   useEffect(() => {
@@ -78,7 +85,7 @@ export default function GlobeView({
         height={size.height || undefined}
         globeImageUrl="https://unpkg.com/three-globe/example/img/earth-night.jpg"
         backgroundColor="#0a0e17"
-        onGlobeReady={() => onReady?.()}
+        onGlobeReady={handleGlobeReady}
 
 
         // --- Atmosphere --- //
