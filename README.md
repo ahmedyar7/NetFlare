@@ -37,25 +37,29 @@ live without hammering the upstream APIs.
 - **Persistent cache** — SQLite store survives restarts; upstream APIs polled on a schedule
 
 ## Demo
+- Watch demo on YouTube by Clicking Below
 
-<a href="https://drive.google.com/file/d/1ffb1HXle2Ybm6LmeqAjMZ7Yvhr9MD053/view?usp=sharing">
-  <img src="./assets/thumbnail.png" height="250" >
-</a>
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=PDNFF2imh3U">
+    <img src="https://img.youtube.com/vi/PDNFF2imh3U/maxresdefault.jpg" alt="NetFlare Video Overview" width="600">
+  </a>
+</p>
 
 ## Architecture
 
 ```mermaid
 ---
 config:
-  layout: dagre
+  layout: elk
 ---
 flowchart TB
- subgraph EXT["🌐 External Data Sources"]
+    subgraph EXT["🌐 External Data Sources"]
         A1["AbuseIPDB API<br>(blacklist endpoint)<br>malicious IPs + confidence scores"]
         A2["Cloudflare Radar API<br>attack trends + traffic spikes"]
         A3["GeoLite2 DB (MaxMind)<br>local IP → lat/lon lookup"]
-  end
- subgraph BE["⚙️ Backend — FastAPI"]
+    end
+
+    subgraph BE["⚙️ Backend — FastAPI"]
         B1["Scheduler (APScheduler)<br>polls APIs every 5 min"]
         B2["Ingestion Service<br>httpx async fetchers"]
         B3["ML Classifier<br>Random Forest / XGBoost<br>DDoS likelihood score"]
@@ -63,29 +67,42 @@ flowchart TB
         B5[("Cache / Store<br>Redis or SQLite")]
         B6["REST endpoint<br>GET /attacks"]
         B7["WebSocket endpoint<br>/ws — live event push"]
-  end
- subgraph FE["🖥️ Frontend"]
+    end
+
+    subgraph FE["🖥️ Frontend"]
         C1["Globe.gl (Three.js)<br>3D globe with arcs &amp; pulses"]
         C2["Trends Panel<br>charts from Radar data"]
         C3["WebSocket client<br>receives live events"]
-  end
-    A1 -- IP list + abuse scores --> B2
-    A2 -- attack trend data --> B2
-    B1 -- triggers --> B2
-    B2 -- raw IP records --> B3
+    end
+    A1 -- "IP list + abuse scores" --> B2
+    A2 -- "attack trend data" --> B2
+    B1 -- "triggers" --> B2
+    B2 -- "raw IP records" --> B3
     B3 -- "high-confidence DDoS IPs" --> B4
-    A3 -. offline lookup .-> B4
-    B4 -- (lat, lon, score, country) --> B5
+    A3 -. "offline lookup" .-> B4
+    B4 -- "(lat, lon, score, country)" --> B5
     B5 --> B6
-    B5 -- new events --> B7
-    B6 -- initial load (JSON) --> C1
-    B7 -- live updates --> C3
-    C3 -- spawn arcs + ripples --> C1
-    B6 -- trend stats --> C2
-
-    style EXT fill:#1a1a2e,stroke:#e94560,color:#fff
-    style BE fill:#16213e,stroke:#0f9b8e,color:#fff
-    style FE fill:#0f3460,stroke:#e9a319,color:#fff
+    B5 -- "new events" --> B7
+    B6 -- "initial load (JSON)" --> C1
+    B7 -- "live updates" --> C3
+    C3 -- "spawn arcs + ripples" --> C1
+    B6 -- "trend stats" --> C2
+    style EXT fill:none,stroke:#4A5568,stroke-width:2px,stroke-dasharray: 4 4,color:#2D3748
+    style BE fill:none,stroke:#4A5568,stroke-width:2px,stroke-dasharray: 4 4,color:#2D3748
+    style FE fill:none,stroke:#4A5568,stroke-width:2px,stroke-dasharray: 4 4,color:#2D3748
+    style A1 fill:#FF6B6B,stroke:#C53030,stroke-width:2px,color:#000000
+    style A2 fill:#FF8E53,stroke:#C53030,stroke-width:2px,color:#000000
+    style A3 fill:#FFA8A8,stroke:#C53030,stroke-width:2px,color:#000000
+    style B1 fill:#4ECDC4,stroke:#2B6CB0,stroke-width:2px,color:#000000
+    style B2 fill:#45B7D1,stroke:#2B6CB0,stroke-width:2px,color:#000000
+    style B3 fill:#96CEB4,stroke:#2B6CB0,stroke-width:2px,color:#000000
+    style B4 fill:#82C91E,stroke:#2B6CB0,stroke-width:2px,color:#000000
+    style B5 fill:#4DABF7,stroke:#2B6CB0,stroke-width:2px,color:#000000
+    style B6 fill:#339AF0,stroke:#2B6CB0,stroke-width:2px,color:#000000
+    style B7 fill:#74C0FC,stroke:#2B6CB0,stroke-width:2px,color:#000000
+    style C1 fill:#CC5DE8,stroke:#6B46C1,stroke-width:2px,color:#000000
+    style C2 fill:#B197FC,stroke:#6B46C1,stroke-width:2px,color:#000000
+    style C3 fill:#DA77F2,stroke:#6B46C1,stroke-width:2px,color:#000000 
 
 ```
 
